@@ -73,8 +73,7 @@ class _CameraPageState extends State<CameraPage> {
       //upload the post to users collection
       List<String> post = [imageUrl!, imagecaption];
       print(post);
-
-
+      await usersCollection.doc(user.uid).update({'posts': post});
 
     } catch (error) {
       print("Error uploading image: $error");
