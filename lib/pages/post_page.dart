@@ -71,9 +71,18 @@ class _CameraPageState extends State<CameraPage> {
       imageUrl = await referenceImageToUpload.getDownloadURL();
       String imagecaption = _captionTextController.text.trim();
       //upload the post to users collection
-      List<String> post = [imageUrl!, imagecaption];
-      print(post);
-      await usersCollection.doc(user.uid).update({'posts': post});
+
+// Create a new post map
+      // Create a new post map
+      Map<String, dynamic> newPost = {
+        'imageUrl': imageUrl!,
+        'caption': _captionTextController.text.trim(),
+      };
+
+// Update the posts field in Firestore with the new post
+      await usersCollection.doc(user.uid).update({
+        'posts': FieldValue.arrayUnion([newPost]),
+      });
 
     } catch (error) {
       print("Error uploading image: $error");

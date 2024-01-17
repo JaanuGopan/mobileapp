@@ -1,11 +1,9 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:smartgarden/components/button.dart';
 import 'package:smartgarden/components/post_list.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -139,127 +137,127 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         child: Center(
           child: SingleChildScrollView(
-            child: Stack(
-              children: [
-                Container(
-                  width: screenWidth * 0.9,
-                  height: screenHeight * 0.8,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.97),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      left: 0.0,
-                      right: 0.0,
-                      top: 5.0,
-                      bottom: 16.0,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            CircleAvatar(
-                              radius: 100,
-                              backgroundColor: Colors.transparent,
-                              child: ClipOval(
-                                child: SizedBox(
-                                  width: 300,
-                                  height: 300,
-                                  child: selectedImageFile != null
-                                      ? Image.file(
-                                          File(selectedImageFile!.path),
-                                          width: 300,
-                                          height: 300,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : isLoadingProfilePhoto
-                                          ? CircularProgressIndicator(
-                                              color: Color(0xFF207D4A),
-                                            )
-                                          : imageUrl != null
-                                              ? Image.network(
-                                                  imageUrl!,
-                                                  width: 300,
-                                                  height: 300,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : Container(
-                                                  width: 300,
-                                                  height: 300,
-                                                  color: Color(0xFFC7DED2),
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    color: Color(0xFF207D4A),
-                                                  ),
+            child: Container(
+              width: screenWidth * 0.9,
+              height: screenHeight * 0.8,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.97),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 0.0,
+                  right: 0.0,
+                  top: 5.0,
+                  bottom: 16.0,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 100,
+                            backgroundColor: Colors.transparent,
+                            child: ClipOval(
+                              child: SizedBox(
+                                width: 300,
+                                height: 300,
+                                child: selectedImageFile != null
+                                    ? Image.file(
+                                        File(selectedImageFile!.path),
+                                        width: 300,
+                                        height: 300,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : isLoadingProfilePhoto
+                                        ? CircularProgressIndicator(
+                                            color: Color(0xFF207D4A),
+                                          )
+                                        : imageUrl != null
+                                            ? Image.network(
+                                                imageUrl!,
+                                                width: 300,
+                                                height: 300,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Container(
+                                                width: 300,
+                                                height: 300,
+                                                color: Color(0xFFC7DED2),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  color: Color(0xFF207D4A),
                                                 ),
-                                ),
+                                              ),
                               ),
                             ),
-                            Positioned(
-                              bottom: -10,
-                              left: 220,
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.add_a_photo,
-                                  color: Color(0xFF207D4A),
-                                  size: 30,
-                                ),
-                                onPressed: () {
-                                  selectCameraOrGallery(false);
-                                },
-                              ),
-                            ),
-                            isLoadingProfilePhoto
-                                ? Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Container(
-                                      width: 10,
-                                      height: 10,
-                                    ),
-                                  )
-                                : Container()
-                          ],
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        isLoadingCaption
-                            ? CircularProgressIndicator(
+                          ),
+                          Positioned(
+                            bottom: -10,
+                            left: 220,
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.add_a_photo,
                                 color: Color(0xFF207D4A),
-                              )
-                            : Text(
-                                "${imageCaption != null ? imageCaption : ""}",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF207D4A),
-                                ),
+                                size: 30,
                               ),
-                        SizedBox(height: 20),
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 10,
+                              onPressed: () {
+                                selectCameraOrGallery(false);
+                              },
                             ),
-                            Text(
-                              "Posts",
+                          ),
+                          isLoadingProfilePhoto
+                              ? Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Container(
+                                    width: 10,
+                                    height: 10,
+                                  ),
+                                )
+                              : Container()
+                        ],
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      isLoadingCaption
+                          ? CircularProgressIndicator(
+                              color: Color(0xFF207D4A),
+                            )
+                          : Text(
+                              "${imageCaption != null ? imageCaption : ""}",
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF207D4A),
                               ),
                             ),
-                          ],
-                        ),
-                        PostList(userID: user.uid),
-                      ],
-                    ),
+                      SizedBox(height: 20),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Text(
+                            "Posts",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF207D4A),
+                            ),
+                          ),
+                        ],
+                      ),
+                      PostList(userID: user.uid,postIndex: 0,),
+                      PostList(userID: user.uid,postIndex: 1,),
+                      PostList(userID: user.uid,postIndex: 2,),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
