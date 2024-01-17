@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smartgarden/components/button.dart';
+import 'package:smartgarden/components/post_list.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -17,37 +18,61 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final user = FirebaseAuth.instance.currentUser!;
   final CollectionReference usersCollection =
-  FirebaseFirestore.instance.collection("users");
+      FirebaseFirestore.instance.collection("users");
 
   String? imageUrl;
   String? imageCaption;
-  bool isLoading = false;
+  bool isLoadingProfilePhoto = false;
+  bool isLoadingCaption = false;
   XFile? selectedImageFile;
 
   @override
   void initState() {
     super.initState();
-    fetchProfilePicture(); // Fetch profile picture when the page initializes
+    fetchProfileData(); // Fetch profile data when the page initializes
   }
 
-  Future<void> fetchProfilePicture() async {
+  Future<void> fetchProfileData() async {
     try {
-      DocumentSnapshot userSnapshot =
-      await usersCollection.doc(user.uid).get();
+      // Fetch profile photo
+      DocumentSnapshot userSnapshot = await usersCollection.doc(user.uid).get();
 
       if (userSnapshot.exists) {
         Map<String, dynamic> userData =
-        userSnapshot.data() as Map<String, dynamic>;
+            userSnapshot.data() as Map<String, dynamic>;
 
-        if (userData.containsKey('profilePicture') && userData.containsKey('userName')) {
+        if (userData.containsKey('profilePicture') &&
+            userData.containsKey('userName')) {
           setState(() {
             imageUrl = userData['profilePicture'];
-            imageCaption = userData['userName'];
+            isLoadingProfilePhoto =
+                false; // Set loading to false when data is loaded
+          });
+        }
+      }
+
+      // Fetch photo caption
+      setState(() {
+        isLoadingCaption = true; // Set loading to true while fetching caption
+      });
+
+      DocumentSnapshot captionSnapshot =
+          await usersCollection.doc(user.uid).get();
+
+      if (captionSnapshot.exists) {
+        Map<String, dynamic> captionData =
+            captionSnapshot.data() as Map<String, dynamic>;
+
+        if (captionData.containsKey('userName')) {
+          setState(() {
+            imageCaption = captionData['userName'];
+            isLoadingCaption =
+                false; // Set loading to false when data is loaded
           });
         }
       }
     } catch (error) {
-      print("Error fetching profile picture: $error");
+      print("Error fetching profile data: $error");
     }
   }
 
@@ -72,7 +97,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       setState(() {
-        isLoading = true; // Set loading to true when starting image upload
+        isLoadingProfilePhoto =
+            true; // Set loading to true when starting image upload
       });
 
       String uniqueFileName = 'profile_${user.uid.toString()}.jpeg';
@@ -80,7 +106,7 @@ class _ProfilePageState extends State<ProfilePage> {
       Reference referenceRoot = FirebaseStorage.instance.ref();
       Reference referenceDirImages = referenceRoot.child('profile_images');
       Reference referenceImageToUpload =
-      referenceDirImages.child(uniqueFileName);
+          referenceDirImages.child(uniqueFileName);
 
       await referenceImageToUpload.putFile(File(selectedImageFile!.path));
       imageUrl = await referenceImageToUpload.getDownloadURL();
@@ -92,7 +118,8 @@ class _ProfilePageState extends State<ProfilePage> {
       // You can add additional error handling if needed
     } finally {
       setState(() {
-        isLoading = false; // Set loading to false when image upload is complete
+        isLoadingProfilePhoto =
+            false; // Set loading to false when image upload is complete
       });
     }
   }
@@ -143,31 +170,37 @@ class _ProfilePageState extends State<ProfilePage> {
                                   height: 300,
                                   child: selectedImageFile != null
                                       ? Image.file(
-                                    File(selectedImageFile!.path),
-                                    width: 300,
-                                    height: 300,
-                                    fit: BoxFit.cover,
-                                  )
-                                      : imageUrl != null
-                                      ? Image.network(
-                                    imageUrl!,
-                                    width: 300,
-                                    height: 300,
-                                    fit: BoxFit.cover,
-                                  )
-                                      : Image(
-                                    image: AssetImage(
-                                        "lib/assets/profile.png"),
-                                    height: 300,
-                                    width: 300,
-                                    fit: BoxFit.cover,
-                                  ),
+                                          File(selectedImageFile!.path),
+                                          width: 300,
+                                          height: 300,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : isLoadingProfilePhoto
+                                          ? CircularProgressIndicator(
+                                              color: Color(0xFF207D4A),
+                                            )
+                                          : imageUrl != null
+                                              ? Image.network(
+                                                  imageUrl!,
+                                                  width: 300,
+                                                  height: 300,
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : Container(
+                                                  width: 300,
+                                                  height: 300,
+                                                  color: Color(0xFFC7DED2),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    color: Color(0xFF207D4A),
+                                                  ),
+                                                ),
                                 ),
                               ),
                             ),
                             Positioned(
                               bottom: -10,
-                              left: 160,
+                              left: 220,
                               child: IconButton(
                                 icon: Icon(
                                   Icons.add_a_photo,
@@ -179,37 +212,38 @@ class _ProfilePageState extends State<ProfilePage> {
                                 },
                               ),
                             ),
-                            isLoading
+                            isLoadingProfilePhoto
                                 ? Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: CircularProgressIndicator(
-                                color: Color(0xFF207D4A),
-                              ),
-                            )
-                                : Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Container(
-                                width: 10,
-                                height: 10,
-                              ),
-                            )
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Container(
+                                      width: 10,
+                                      height: 10,
+                                    ),
+                                  )
+                                : Container()
                           ],
                         ),
                         SizedBox(
                           height: 10,
                         ),
-                        Text(
-                          "${imageCaption != null ? imageCaption : ""}",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF207D4A),
-                          ),
-                        ),
+                        isLoadingCaption
+                            ? CircularProgressIndicator(
+                                color: Color(0xFF207D4A),
+                              )
+                            : Text(
+                                "${imageCaption != null ? imageCaption : ""}",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF207D4A),
+                                ),
+                              ),
                         SizedBox(height: 20),
                         Row(
                           children: [
-                            SizedBox(width: 10,),
+                            SizedBox(
+                              width: 10,
+                            ),
                             Text(
                               "Posts",
                               style: TextStyle(
@@ -220,6 +254,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ],
                         ),
+                        PostList(userID: user.uid),
                       ],
                     ),
                   ),
