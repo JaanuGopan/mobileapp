@@ -79,11 +79,23 @@ class _PostListState extends State<PostList> {
             SizedBox(
               width: 10,
             ),
-            Image.network(
-              postUrl.toString(),
-              height: 70,
-              width: 70,
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  postUrl.toString(),
+                  height: 70,
+                  width: 70,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
+
+            SizedBox(width: 5,),
             Text(
               postCaption.toString(),
               style: TextStyle(

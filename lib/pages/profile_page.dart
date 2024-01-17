@@ -16,13 +16,14 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final user = FirebaseAuth.instance.currentUser!;
   final CollectionReference usersCollection =
-      FirebaseFirestore.instance.collection("users");
+  FirebaseFirestore.instance.collection("users");
 
   String? imageUrl;
   String? imageCaption;
   bool isLoadingProfilePhoto = false;
   bool isLoadingCaption = false;
   XFile? selectedImageFile;
+  Map<String, dynamic>? userDataForPost;
 
   @override
   void initState() {
@@ -37,14 +38,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (userSnapshot.exists) {
         Map<String, dynamic> userData =
-            userSnapshot.data() as Map<String, dynamic>;
+        userSnapshot.data() as Map<String, dynamic>;
 
         if (userData.containsKey('profilePicture') &&
             userData.containsKey('userName')) {
           setState(() {
             imageUrl = userData['profilePicture'];
             isLoadingProfilePhoto =
-                false; // Set loading to false when data is loaded
+            false; // Set loading to false when data is loaded
+            userDataForPost = userData;
           });
         }
       }
@@ -55,17 +57,17 @@ class _ProfilePageState extends State<ProfilePage> {
       });
 
       DocumentSnapshot captionSnapshot =
-          await usersCollection.doc(user.uid).get();
+      await usersCollection.doc(user.uid).get();
 
       if (captionSnapshot.exists) {
         Map<String, dynamic> captionData =
-            captionSnapshot.data() as Map<String, dynamic>;
+        captionSnapshot.data() as Map<String, dynamic>;
 
         if (captionData.containsKey('userName')) {
           setState(() {
             imageCaption = captionData['userName'];
             isLoadingCaption =
-                false; // Set loading to false when data is loaded
+            false; // Set loading to false when data is loaded
           });
         }
       }
@@ -96,7 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       setState(() {
         isLoadingProfilePhoto =
-            true; // Set loading to true when starting image upload
+        true; // Set loading to true when starting image upload
       });
 
       String uniqueFileName = 'profile_${user.uid.toString()}.jpeg';
@@ -104,7 +106,7 @@ class _ProfilePageState extends State<ProfilePage> {
       Reference referenceRoot = FirebaseStorage.instance.ref();
       Reference referenceDirImages = referenceRoot.child('profile_images');
       Reference referenceImageToUpload =
-          referenceDirImages.child(uniqueFileName);
+      referenceDirImages.child(uniqueFileName);
 
       await referenceImageToUpload.putFile(File(selectedImageFile!.path));
       imageUrl = await referenceImageToUpload.getDownloadURL();
@@ -117,7 +119,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } finally {
       setState(() {
         isLoadingProfilePhoto =
-            false; // Set loading to false when image upload is complete
+        false; // Set loading to false when image upload is complete
       });
     }
   }
@@ -167,31 +169,31 @@ class _ProfilePageState extends State<ProfilePage> {
                                 height: 300,
                                 child: selectedImageFile != null
                                     ? Image.file(
-                                        File(selectedImageFile!.path),
-                                        width: 300,
-                                        height: 300,
-                                        fit: BoxFit.cover,
-                                      )
+                                  File(selectedImageFile!.path),
+                                  width: 300,
+                                  height: 300,
+                                  fit: BoxFit.cover,
+                                )
                                     : isLoadingProfilePhoto
-                                        ? CircularProgressIndicator(
-                                            color: Color(0xFF207D4A),
-                                          )
-                                        : imageUrl != null
-                                            ? Image.network(
-                                                imageUrl!,
-                                                width: 300,
-                                                height: 300,
-                                                fit: BoxFit.cover,
-                                              )
-                                            : Container(
-                                                width: 300,
-                                                height: 300,
-                                                color: Color(0xFFC7DED2),
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  color: Color(0xFF207D4A),
-                                                ),
-                                              ),
+                                    ? CircularProgressIndicator(
+                                  color: Color(0xFF207D4A),
+                                )
+                                    : imageUrl != null
+                                    ? Image.network(
+                                  imageUrl!,
+                                  width: 300,
+                                  height: 300,
+                                  fit: BoxFit.cover,
+                                )
+                                    : Container(
+                                  width: 300,
+                                  height: 300,
+                                  color: Color(0xFFC7DED2),
+                                  child:
+                                  CircularProgressIndicator(
+                                    color: Color(0xFF207D4A),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -211,12 +213,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           isLoadingProfilePhoto
                               ? Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Container(
-                                    width: 10,
-                                    height: 10,
-                                  ),
-                                )
+                            padding: const EdgeInsets.all(16.0),
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                            ),
+                          )
                               : Container()
                         ],
                       ),
@@ -225,16 +227,16 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       isLoadingCaption
                           ? CircularProgressIndicator(
-                              color: Color(0xFF207D4A),
-                            )
+                        color: Color(0xFF207D4A),
+                      )
                           : Text(
-                              "${imageCaption != null ? imageCaption : ""}",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF207D4A),
-                              ),
-                            ),
+                        "${imageCaption != null ? imageCaption : ""}",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF207D4A),
+                        ),
+                      ),
                       SizedBox(height: 20),
                       Row(
                         children: [
@@ -251,9 +253,11 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ],
                       ),
-                      PostList(userID: user.uid,postIndex: 0,),
-                      PostList(userID: user.uid,postIndex: 1,),
-                      PostList(userID: user.uid,postIndex: 2,),
+                      // Dynamically create PostList widgets
+                      if (imageUrl != null) ...{
+                        for (int i = 0; i < userDataForPost!['posts'].length; i++)
+                          PostList(userID: user.uid, postIndex: i),
+                      }
                     ],
                   ),
                 ),
