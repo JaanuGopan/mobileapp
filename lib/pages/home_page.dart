@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
                   child: Container(
                       height: screenHeight * 0.8,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withOpacity(0.97),
                         borderRadius: BorderRadius.circular(
                             20), // Adjust the radius as needed
                       ),
