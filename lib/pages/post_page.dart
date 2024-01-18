@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:smartgarden/components/button.dart';
 
 import '../components/text_field.dart';
+import '../models/Post.dart' as model;
 
 class CameraPage extends StatefulWidget {
   const CameraPage({Key? key}) : super(key: key);
@@ -20,6 +21,8 @@ class _CameraPageState extends State<CameraPage> {
   final user = FirebaseAuth.instance.currentUser!;
   final CollectionReference usersCollection =
       FirebaseFirestore.instance.collection("users");
+  final CollectionReference postsCollection =
+      FirebaseFirestore.instance.collection("posts");
 
   final _captionTextController = TextEditingController();
 
@@ -76,20 +79,49 @@ class _CameraPageState extends State<CameraPage> {
       // Create a new post map
       Map<String, dynamic> newPost = {
         'imageUrl': imageUrl!,
-        'caption': _captionTextController.text.trim(),
+        'caption': imagecaption,
       };
 
 // Update the posts field in Firestore with the new post
       await usersCollection.doc(user.uid).update({
         'posts': FieldValue.arrayUnion([newPost]),
       });
+      List<model.Post> postsList = [
+        model.Post(
+          imageUrl: imageUrl!,
+          caption: imagecaption,
+          userId: user.uid,
+          timestamp: Timestamp.now(),
+        ),
+        // Add more posts as needed
+      ];
 
+      for (model.Post post in postsList) {
+        postsCollection.add({
+          'imageUrl': post.imageUrl,
+          'caption': post.caption,
+          'userId': post.userId,
+          'timestamp': post.timestamp,
+        });
+      }
     } catch (error) {
       print("Error uploading image: $error");
       // You can add additional error handling if needed
     } finally {
       setState(() {
         isLoading = false; // Set loading to false when image upload is complete
+        selectedImageFile = null;
+        _captionTextController.text = "";
+        String msg = "Post successfully uploaded..";
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                  content: Text(
+                msg.toString(),
+                style: TextStyle(color: Color(0xFF207D4A), fontSize: 20),
+              ));
+            });
       });
     }
   }

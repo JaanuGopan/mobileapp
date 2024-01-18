@@ -107,11 +107,13 @@ class _PostListState extends State<PostList> {
             Spacer(),
             IconButton(
               icon: Icon(
-                Icons.edit_calendar_outlined,
+                Icons.edit_document,
                 color: Color(0xFF207D4A),
                 size: 30,
               ),
-              onPressed: () {},
+              onPressed: () {
+
+              },
             ),
             SizedBox(
               width: 10,
