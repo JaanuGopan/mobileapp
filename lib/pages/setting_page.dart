@@ -125,12 +125,58 @@ class _SettingsPageState extends State<SettingsPage> {
   final _profileNameTextController = TextEditingController();
   bool profileNameEdit = false;
 
-  void updateProfileName(String? profileName) {
+  void updateProfileName(String? profileName) async {
     setState(() {
       _profileNameTextController.text = profileName!;
       profileNameEdit = true;
       print("profileNameEdit is :" + profileNameEdit.toString());
     });
+  }
+  Future<void> saveProfileName(String? profileName) async {
+    final CollectionReference usersCollection = FirebaseFirestore.instance.collection("users");
+
+// Assume userId is the specific user ID you want to update
+    String userId = user.uid;
+
+// Assume newUserName is the new user name you want to set
+    String newUserName = profileName!;
+
+    try {
+      // Update the 'userName' field in the specific document
+      await usersCollection.doc(userId).update({'userName': newUserName});
+
+      setState(() {
+        imageCaption = profileName;
+      });
+
+      String msg = "Profile name successfully updated";
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+                content: Text(
+                  msg.toString(),
+                  style: TextStyle(color: Color(0xFF207D4A), fontSize: 20),
+                ));
+          });
+
+    } catch (error) {
+      String msg = "Profile name not updated";
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+                content: Text(
+                  msg.toString(),
+                  style: TextStyle(color: Color(0xFF207D4A), fontSize: 20),
+                ));
+          });
+    }finally{
+      setState(() {
+        profileNameEdit = false;
+      });
+    }
+
   }
 
   @override
@@ -258,13 +304,15 @@ class _SettingsPageState extends State<SettingsPage> {
                                 : profileNameEdit
                                     ? Container(
                                         width: 200,
+                                        height: 55,
                                         // Adjust the width based on your design
                                         child: TextField(
                                           controller:
                                               _profileNameTextController,
                                           style: TextStyle(
                                             color: Color(
-                                                0xFF207D4A), // Set the text color
+                                                0xFF207D4A),
+                                            fontSize: 15// Set the text color
                                           ),
                                           decoration: InputDecoration(
                                             enabledBorder: OutlineInputBorder(
@@ -313,6 +361,25 @@ class _SettingsPageState extends State<SettingsPage> {
                                 },
                               ),
                             ),
+                            SizedBox(width: 10,),
+                            profileNameEdit? Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                  color: Color(0xFFC7DED2),
+                                  borderRadius: BorderRadius.circular(10)),
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.save,
+                                  color: Color(0xFF207D4A),
+                                  size: 15,
+                                ),
+                                onPressed: () {
+                                  saveProfileName(_profileNameTextController.text);
+                                },
+                              ),
+                            )
+                            : Container(),
                           ],
                         ),
                       ],
