@@ -513,7 +513,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           MyButton(
                               onTap: () {
                                 changePassword(
-                                    _confirmNewPasswordEditingController.text,
+                                    _newPasswordEditingController.text,
                                     _oldPasswordEditingController.text,
                                     _confirmNewPasswordEditingController.text);
                               },

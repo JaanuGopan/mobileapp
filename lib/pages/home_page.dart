@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
                         child: SingleChildScrollView(
                           child: Column(
                             children: [
-                              StatusBar(),
+                              //StatusBar(),
 
                              if(postList != null) ... {
                                for(var post in postList)...{
