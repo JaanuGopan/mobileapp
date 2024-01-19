@@ -135,8 +135,8 @@ class _PostState extends State<Post> {
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
                 postUrl.toString(),
-                height: 200,
-                width: 200,
+                height: 300,
+                width: 300,
                 fit: BoxFit.cover,
               ),
             ),

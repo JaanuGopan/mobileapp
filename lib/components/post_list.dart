@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:smartgarden/components/edit_post.dart';
 
 class PostList extends StatefulWidget {
   final String userID;
@@ -112,7 +113,12 @@ class _PostListState extends State<PostList> {
                 size: 30,
               ),
               onPressed: () {
-
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return EditPostOverlay(userId: widget.userID,postindex: widget.postIndex,);
+                  },
+                );
               },
             ),
             SizedBox(

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:smartgarden/auth/login_or_register.dart';
 import 'package:smartgarden/pages/main_page.dart';
 
-import '../pages/home_page.dart';
 
 class AuthPage extends StatelessWidget {
   const AuthPage({super.key});
