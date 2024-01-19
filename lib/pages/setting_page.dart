@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:smartgarden/components/button.dart';
+import 'package:smartgarden/components/text_field.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -132,8 +134,10 @@ class _SettingsPageState extends State<SettingsPage> {
       print("profileNameEdit is :" + profileNameEdit.toString());
     });
   }
+
   Future<void> saveProfileName(String? profileName) async {
-    final CollectionReference usersCollection = FirebaseFirestore.instance.collection("users");
+    final CollectionReference usersCollection =
+        FirebaseFirestore.instance.collection("users");
 
 // Assume userId is the specific user ID you want to update
     String userId = user.uid;
@@ -155,11 +159,10 @@ class _SettingsPageState extends State<SettingsPage> {
           builder: (context) {
             return AlertDialog(
                 content: Text(
-                  msg.toString(),
-                  style: TextStyle(color: Color(0xFF207D4A), fontSize: 20),
-                ));
+              msg.toString(),
+              style: TextStyle(color: Color(0xFF207D4A), fontSize: 20),
+            ));
           });
-
     } catch (error) {
       String msg = "Profile name not updated";
       showDialog(
@@ -167,15 +170,87 @@ class _SettingsPageState extends State<SettingsPage> {
           builder: (context) {
             return AlertDialog(
                 content: Text(
-                  msg.toString(),
-                  style: TextStyle(color: Color(0xFF207D4A), fontSize: 20),
-                ));
+              msg.toString(),
+              style: TextStyle(color: Color(0xFF207D4A), fontSize: 20),
+            ));
           });
-    }finally{
+    } finally {
       setState(() {
         profileNameEdit = false;
       });
     }
+  }
+
+  final _oldPasswordEditingController = TextEditingController();
+  final _newPasswordEditingController = TextEditingController();
+  final _confirmNewPasswordEditingController = TextEditingController();
+
+  Future<void> changePassword(String? newPassword, String? oldPassword,
+      String? confirmNewPassword) async {
+    bool correctOldPassword = false;
+    if (newPassword == confirmNewPassword) {
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: user.email.toString(),
+          password: oldPassword.toString(),
+        );
+        correctOldPassword = true;
+      } catch (error) {}
+
+      if (correctOldPassword) {
+        try {
+          if (newPassword != null) {
+            user.updatePassword(newPassword);
+            final CollectionReference usersCollection =
+            FirebaseFirestore.instance.collection("users");
+            await usersCollection.doc(user.uid).update({'password': newPassword});
+            String msg = "Password changed.";
+            showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                      content: Text(
+                        msg.toString(),
+                        style: TextStyle(color: Color(0xFF207D4A), fontSize: 20),
+                      ));
+                });
+          }
+          setState(() {
+            _oldPasswordEditingController.text = "";
+            _newPasswordEditingController.text = "";
+            _confirmNewPasswordEditingController.text = "";
+          });
+        } catch (e) {
+          String msg = "Password not changed";
+          showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                    content: Text(
+                      msg.toString(),
+                      style: TextStyle(color: Color(0xFF207D4A), fontSize: 20),
+                    ));
+              });
+        } finally {}
+      }else{
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Old Password is wroung."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+
+    }else{
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("New password not match."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
 
   }
 
@@ -210,179 +285,241 @@ class _SettingsPageState extends State<SettingsPage> {
                       top: 5.0,
                       bottom: 16.0,
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        // Your SettingsPage content goes here
-                        Text(
-                          "Settings",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF207D4A),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          // Your SettingsPage content goes here
+                          Text(
+                            "Settings",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF207D4A),
+                            ),
                           ),
-                        ),
-                        // Add more widgets for your SettingsPage content
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            CircleAvatar(
-                              radius: 100,
-                              backgroundColor: Colors.transparent,
-                              child: ClipOval(
-                                child: SizedBox(
-                                  width: 300,
-                                  height: 300,
-                                  child: selectedImageFile != null
-                                      ? Image.file(
-                                          File(selectedImageFile!.path),
-                                          width: 300,
-                                          height: 300,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : isLoadingProfilePhoto
-                                          ? CircularProgressIndicator(
-                                              color: Color(0xFF207D4A),
-                                            )
-                                          : imageUrl != null
-                                              ? Image.network(
-                                                  imageUrl!,
-                                                  width: 300,
-                                                  height: 300,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : Container(
-                                                  width: 300,
-                                                  height: 300,
-                                                  color: Color(0xFFC7DED2),
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    color: Color(0xFF207D4A),
+                          // Add more widgets for your SettingsPage content
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 100,
+                                backgroundColor: Colors.transparent,
+                                child: ClipOval(
+                                  child: SizedBox(
+                                    width: 300,
+                                    height: 300,
+                                    child: selectedImageFile != null
+                                        ? Image.file(
+                                            File(selectedImageFile!.path),
+                                            width: 300,
+                                            height: 300,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : isLoadingProfilePhoto
+                                            ? CircularProgressIndicator(
+                                                color: Color(0xFF207D4A),
+                                              )
+                                            : imageUrl != null
+                                                ? Image.network(
+                                                    imageUrl!,
+                                                    width: 300,
+                                                    height: 300,
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : Container(
+                                                    width: 300,
+                                                    height: 300,
+                                                    color: Color(0xFFC7DED2),
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color: Color(0xFF207D4A),
+                                                    ),
                                                   ),
-                                                ),
+                                  ),
                                 ),
                               ),
-                            ),
-                            Positioned(
-                              bottom: -10,
-                              left: 220,
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.add_a_photo,
-                                  color: Color(0xFF207D4A),
-                                  size: 30,
-                                ),
-                                onPressed: () {
-                                  selectCameraOrGallery(false);
-                                },
-                              ),
-                            ),
-                            isLoadingProfilePhoto
-                                ? Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Container(
-                                      width: 10,
-                                      height: 10,
-                                    ),
-                                  )
-                                : Container()
-                          ],
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 20,
-                            ),
-                            isLoadingCaption
-                                ? CircularProgressIndicator(
+                              Positioned(
+                                bottom: -10,
+                                left: 220,
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.add_a_photo,
                                     color: Color(0xFF207D4A),
-                                  )
-                                : profileNameEdit
-                                    ? Container(
-                                        width: 200,
-                                        height: 55,
-                                        // Adjust the width based on your design
-                                        child: TextField(
-                                          controller:
-                                              _profileNameTextController,
-                                          style: TextStyle(
-                                            color: Color(
-                                                0xFF207D4A),
-                                            fontSize: 15// Set the text color
-                                          ),
-                                          decoration: InputDecoration(
-                                            enabledBorder: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                color: Color(0xFFD7E5DC),
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(20.0),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  color: Colors.white),
-                                              borderRadius:
-                                                  BorderRadius.circular(20.0),
-                                            ),
-                                            fillColor: Color(0xFFD7E5DC),
-                                          ),
-                                        ),
-                                      )
-                                    : Text(
-                                        "${imageCaption != null ? imageCaption : ""}",
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
+                                    size: 30,
+                                  ),
+                                  onPressed: () {
+                                    selectCameraOrGallery(false);
+                                  },
+                                ),
+                              ),
+                              isLoadingProfilePhoto
+                                  ? Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Container(
+                                        width: 10,
+                                        height: 10,
                                       ),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                  color: Color(0xFFC7DED2),
-                                  borderRadius: BorderRadius.circular(10)),
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.edit_note_outlined,
-                                  color: Color(0xFF207D4A),
-                                  size: 15,
-                                ),
-                                onPressed: () {
-                                  updateProfileName(
-                                      imageCaption != null ? imageCaption : "");
-                                },
+                                    )
+                                  : Container()
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 20,
                               ),
-                            ),
-                            SizedBox(width: 10,),
-                            profileNameEdit? Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                  color: Color(0xFFC7DED2),
-                                  borderRadius: BorderRadius.circular(10)),
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.save,
-                                  color: Color(0xFF207D4A),
-                                  size: 15,
-                                ),
-                                onPressed: () {
-                                  saveProfileName(_profileNameTextController.text);
-                                },
+                              isLoadingCaption
+                                  ? CircularProgressIndicator(
+                                      color: Color(0xFF207D4A),
+                                    )
+                                  : profileNameEdit
+                                      ? Container(
+                                          width: 200,
+                                          height: 55,
+                                          // Adjust the width based on your design
+                                          child: TextField(
+                                            controller:
+                                                _profileNameTextController,
+                                            style: TextStyle(
+                                                color: Color(0xFF207D4A),
+                                                fontSize:
+                                                    15 // Set the text color
+                                                ),
+                                            decoration: InputDecoration(
+                                              enabledBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  color: Color(0xFFD7E5DC),
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(20.0),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                    color: Colors.white),
+                                                borderRadius:
+                                                    BorderRadius.circular(20.0),
+                                              ),
+                                              fillColor: Color(0xFFD7E5DC),
+                                            ),
+                                          ),
+                                        )
+                                      : Text(
+                                          "${imageCaption != null ? imageCaption : ""}",
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                              SizedBox(
+                                width: 10,
                               ),
-                            )
-                            : Container(),
-                          ],
-                        ),
-                      ],
+                              Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                    color: Color(0xFFC7DED2),
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.edit_note_outlined,
+                                    color: Color(0xFF207D4A),
+                                    size: 15,
+                                  ),
+                                  onPressed: () {
+                                    updateProfileName(imageCaption != null
+                                        ? imageCaption
+                                        : "");
+                                  },
+                                ),
+                              ),
+                              SizedBox(
+                                width: 10,
+                              ),
+                              profileNameEdit
+                                  ? Container(
+                                      width: 30,
+                                      height: 30,
+                                      decoration: BoxDecoration(
+                                          color: Color(0xFFC7DED2),
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      child: IconButton(
+                                        icon: Icon(
+                                          Icons.save,
+                                          color: Color(0xFF207D4A),
+                                          size: 15,
+                                        ),
+                                        onPressed: () {
+                                          saveProfileName(
+                                              _profileNameTextController.text);
+                                        },
+                                      ),
+                                    )
+                                  : Container(),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                "Change Password",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: Color(0xFF207D4A),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Container(
+                              width: screenWidth * 0.8,
+                              child: MyTextField(
+                                  controller: _oldPasswordEditingController,
+                                  hintText: "Old Password",
+                                  obscureText: true,
+                                  icon: Icon(Icons.password))),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Container(
+                              width: screenWidth * 0.8,
+                              child: MyTextField(
+                                  controller: _newPasswordEditingController,
+                                  hintText: "New Password",
+                                  obscureText: true,
+                                  icon: Icon(Icons.password))),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Container(
+                              width: screenWidth * 0.8,
+                              child: MyTextField(
+                                  controller:
+                                      _confirmNewPasswordEditingController,
+                                  hintText: "Confirm New Password",
+                                  obscureText: true,
+                                  icon: Icon(Icons.password))),
+                          SizedBox(
+                            height: 15,
+                          ),
+                          MyButton(
+                              onTap: () {
+                                changePassword(
+                                    _confirmNewPasswordEditingController.text,
+                                    _oldPasswordEditingController.text,
+                                    _confirmNewPasswordEditingController.text);
+                              },
+                              text: "Change Password")
+                        ],
+                      ),
                     ),
                   ),
                 ),

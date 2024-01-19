@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> {
     var randomPosts = await FirebaseFirestore.instance
         .collection('posts')
         .orderBy('timestamp') // Use a field for ordering, like timestamp
-        .limit(5) // Adjust the limit based on your requirements
+        .limit(15) // Adjust the limit based on your requirements
         .get();
 
     // Shuffle the list of random posts
@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
                   child: Container(
                       height: screenHeight * 0.8,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.97),
+                        color: Colors.white.withOpacity(0.99),
                         borderRadius: BorderRadius.circular(
                             20), // Adjust the radius as needed
                       ),

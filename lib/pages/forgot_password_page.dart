@@ -21,14 +21,36 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   Future passwordreset() async {
-    try{
-      await FirebaseAuth.instance
-          .sendPasswordResetEmail(email: _emailController.text.trim());
-    } on FirebaseAuthException catch (e) {
-      print(e);
-      showDialog(context: context, builder: (context){
-        return AlertDialog(content: Text(e.message.toString()),);
-      });
+    if (_emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Please enter the email address."),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    } else {
+      try {
+        await FirebaseAuth.instance
+            .sendPasswordResetEmail(email: _emailController.text.trim());
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Check your email address."),
+          backgroundColor: Colors.green,
+        ));
+        setState(() {
+          _emailController.text = "";
+        });
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) {
+            return LoginOrRegister();
+          }),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Your email address is wroung."),
+          backgroundColor: Colors.red,
+        ));
+
+      }
     }
 
   }
@@ -53,7 +75,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     width: 350,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.95),
-                      borderRadius: BorderRadius.circular(20), // Adjust the radius as needed
+                      borderRadius: BorderRadius.circular(
+                          20), // Adjust the radius as needed
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),

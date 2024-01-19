@@ -22,12 +22,48 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordTextController = TextEditingController();
 
   // signin method
-  Future signIn() async {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: _emailTextController.text.trim(),
-      password: _passwordTextController.text.trim(),
-    );
-    print("button clicked");
+  Future<void> signIn() async {
+    String email = _emailTextController.text.trim();
+    String password = _passwordTextController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      // Show an error message or handle it as needed
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Please enter the email and password"),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+    if (email.isEmpty || password.isEmpty) {
+      // Show an error message or handle it as needed
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Please enter the email and password"),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Sign in successful"),
+        backgroundColor: Colors.green,
+      ));
+      print("Welcome to SmartGarden");
+      // Navigate to the next screen or perform other actions after successful sign-in
+    } catch (error) {
+      // Handle specific errors (e.g., invalid email, wrong password) if needed
+      print("Error signing in: $error");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Please check email and password."),
+        backgroundColor: Colors.red,
+      ));
+
+      // Show an error message or handle it as needed
+    }
   }
 
   @override
