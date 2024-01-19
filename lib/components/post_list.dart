@@ -6,7 +6,7 @@ class PostList extends StatefulWidget {
   final String userID;
   final int postIndex;
 
-  const PostList({super.key, required this.userID,required this.postIndex});
+  const PostList({super.key, required this.userID, required this.postIndex});
 
   @override
   State<PostList> createState() => _PostListState();
@@ -14,11 +14,12 @@ class PostList extends StatefulWidget {
 
 class _PostListState extends State<PostList> {
   final CollectionReference usersCollection =
-  FirebaseFirestore.instance.collection("users");
+      FirebaseFirestore.instance.collection("users");
 
   String? postUrl;
   String? postCaption;
   bool isLoading = true; // Add loading state
+  bool isPhostImageLoading = false;
 
   @override
   void initState() {
@@ -28,12 +29,15 @@ class _PostListState extends State<PostList> {
 
   Future<void> fetchProfilePicture() async {
     try {
+      setState(() {
+        isPhostImageLoading = true;
+      });
       DocumentSnapshot userSnapshot =
-      await usersCollection.doc(widget.userID).get();
+          await usersCollection.doc(widget.userID).get();
 
       if (userSnapshot.exists) {
         Map<String, dynamic> userData =
-        userSnapshot.data() as Map<String, dynamic>;
+            userSnapshot.data() as Map<String, dynamic>;
 
         // Assuming userData['posts'] is not null and is an array
         if (userData.containsKey('posts') && userData['posts'].isNotEmpty) {
@@ -41,7 +45,8 @@ class _PostListState extends State<PostList> {
           Map<String, dynamic> firstPost = userData['posts'][widget.postIndex];
 
           // Check if the post has 'imageUrl' and 'caption' fields
-          if (firstPost.containsKey('imageUrl') && firstPost.containsKey('caption')) {
+          if (firstPost.containsKey('imageUrl') &&
+              firstPost.containsKey('caption')) {
             setState(() {
               postUrl = firstPost['imageUrl'];
               postCaption = firstPost['caption'];
@@ -54,6 +59,10 @@ class _PostListState extends State<PostList> {
       print("Error fetching profile picture: $error");
       setState(() {
         isLoading = false; // Set loading to false in case of an error
+      });
+    } finally {
+      setState(() {
+        isPhostImageLoading = false;
       });
     }
   }
@@ -71,61 +80,69 @@ class _PostListState extends State<PostList> {
         ),
         child: isLoading
             ? Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF207D4A),
-          ),
-        )
-            : Row(
-          children: [
-            SizedBox(
-              width: 10,
-            ),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.white,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  postUrl.toString(),
-                  height: 70,
-                  width: 70,
-                  fit: BoxFit.cover,
+                child: CircularProgressIndicator(
+                  color: Color(0xFF207D4A),
                 ),
+              )
+            : Row(
+                children: [
+                  SizedBox(
+                    width: 10,
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: isPhostImageLoading
+                          ? CircularProgressIndicator(
+                              color: Color(0xFF207D4A),
+                            )
+                          : Image.network(
+                              postUrl.toString(),
+                              height: 70,
+                              width: 70,
+                              fit: BoxFit.cover,
+                            ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Text(
+                    postCaption.toString(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.normal,
+                      color: Color(0xFF207D4A),
+                    ),
+                  ),
+                  Spacer(),
+                  IconButton(
+                    icon: Icon(
+                      Icons.edit_document,
+                      color: Color(0xFF207D4A),
+                      size: 30,
+                    ),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return EditPostOverlay(
+                            userId: widget.userID,
+                            postindex: widget.postIndex,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  SizedBox(
+                    width: 10,
+                  )
+                ],
               ),
-            ),
-
-            SizedBox(width: 5,),
-            Text(
-              postCaption.toString(),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.normal,
-                color: Color(0xFF207D4A),
-              ),
-            ),
-            Spacer(),
-            IconButton(
-              icon: Icon(
-                Icons.edit_document,
-                color: Color(0xFF207D4A),
-                size: 30,
-              ),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return EditPostOverlay(userId: widget.userID,postindex: widget.postIndex,);
-                  },
-                );
-              },
-            ),
-            SizedBox(
-              width: 10,
-            )
-          ],
-        ),
       ),
     );
   }

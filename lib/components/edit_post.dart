@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smartgarden/components/button.dart';
@@ -18,6 +19,8 @@ class EditPostOverlay extends StatefulWidget {
   @override
   _EditPostOverlayState createState() => _EditPostOverlayState();
 }
+
+
 
 class _EditPostOverlayState extends State<EditPostOverlay> {
   TextEditingController _postTextController = TextEditingController();
@@ -79,6 +82,96 @@ class _EditPostOverlayState extends State<EditPostOverlay> {
       setState(() {
         selectedImageFile = imageFile;
       });
+    }
+
+  }
+
+  Future<void> updatePost() async {
+    try {
+      setState(() {
+        isLoadingupload = true; // Set loading to true when starting image upload
+      });
+
+      if (_postTextController.text == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Please enter the caption"),
+          backgroundColor: Colors.red,
+        ));
+        return;
+      }
+
+      // If selectedImageFile is null, update caption only
+      if (selectedImageFile == null) {
+        // Update user's post in "users" collection
+        await FirebaseFirestore.instance.collection("users").doc(widget.userId).update({
+          'posts.${widget.postindex}.caption': _postTextController.text,
+          'posts.${widget.postindex}.imageUrl': imageUrl,
+        });
+
+
+        // Update post in "posts" collection
+        QuerySnapshot postsSnapshot = await FirebaseFirestore.instance.collection("posts").get();
+        for (QueryDocumentSnapshot postDoc in postsSnapshot.docs) {
+          Map<String, dynamic> post = postDoc.data() as Map<String, dynamic>;
+          if (post.containsKey('imageUrl') && post['imageUrl'] == imageUrl) {
+            // Update caption in "posts" collection
+            await postDoc.reference.update({'caption': _postTextController.text});
+            break; // Break out of the loop once the post is found and updated
+          }
+        }
+      } else {
+        // If selectedImageFile is not null, update image and caption
+
+        // Upload the new image file to Firebase Storage
+        String newImageUrl = await uploadImage(selectedImageFile!);
+
+        // Update user's post in "users" collection
+        await FirebaseFirestore.instance.collection("users").doc(widget.userId).update({
+          'posts.${widget.postindex}.caption': _postTextController.text,
+          'posts.${widget.postindex}.imageUrl': newImageUrl,
+        });
+
+        // Update post in "posts" collection
+        QuerySnapshot postsSnapshot = await FirebaseFirestore.instance.collection("posts").get();
+        for (QueryDocumentSnapshot postDoc in postsSnapshot.docs) {
+          Map<String, dynamic> post = postDoc.data() as Map<String, dynamic>;
+          if (post.containsKey('imageUrl') && post['imageUrl'] == imageUrl) {
+            // Update caption and imageUrl in "posts" collection
+            await postDoc.reference.update({
+              'caption': _postTextController.text,
+              'imageUrl': newImageUrl,
+            });
+            break; // Break out of the loop once the post is found and updated
+          }
+        }
+      }
+
+      // Show success message or perform any additional actions
+    } catch (error) {
+      print("Error updating post: $error");
+      // Handle errors or show error messages
+    } finally {
+      setState(() {
+        isLoadingupload = false; // Set loading to false after update is complete
+      });
+      Navigator.pop(context);
+    }
+  }
+
+  Future<String> uploadImage(XFile? imageFile) async {
+    try {
+      String uniqueFileName = 'post_${widget.userId.toString()}${DateTime.now().microsecondsSinceEpoch.toString()}.jpeg';
+      Reference referenceRoot = FirebaseStorage.instance.ref();
+      Reference referenceDirImages = referenceRoot.child('posts');
+      Reference referenceImageToUpload = referenceDirImages.child(uniqueFileName);
+
+      await referenceImageToUpload.putFile(File(imageFile!.path));
+      String imageUrl = await referenceImageToUpload.getDownloadURL();
+
+      return imageUrl;
+    } catch (error) {
+      print("Error uploading image: $error");
+      throw error; // Rethrow the error to handle it in the calling function
     }
   }
 
@@ -239,9 +332,7 @@ class _EditPostOverlayState extends State<EditPostOverlay> {
                       ),
                       Spacer(),
                       MyButton(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
+                          onTap: updatePost,
                           text: "Save")
                     ],
                   ),
